@@ -1,19 +1,28 @@
-import { Car, CarStatus, User } from '../types';
+import { api } from '../api/axios';
+import { Car } from '../types';
 
 export class CarService {
-    static createCar(data: Partial<Car>, owner: User): Car {
-        //todo call the repository 
-        return {
-            id: Math.random().toString(36).substr(2, 9),
-            ownerId: owner.id,
-            brand: data.brand || '',
-            model: data.model || '',
-            year: data.year || new Date().getFullYear(),
-            pricePerDay: data.pricePerDay || 0,
-            status: CarStatus.AVAILABLE,
-            imageUrl: data.imageUrl || `https://picsum.photos/seed/${data.brand}${data.model}/800/600`,
-            description: data.description || '',
-            location: data.location || ''
-        };
+    static async createCar(data: Partial<Car>): Promise<Car> {
+        const response = await api.post('/cars', data);
+        return response.data;
+    }
+
+    static async getCars(): Promise<Car[]> {
+        const response = await api.get('/cars');
+        return response.data;
+    }
+
+    static async getCarById(id: string): Promise<Car> {
+        const response = await api.get(`/cars/${id}`);
+        return response.data;
+    }
+
+    static async updateCar(id: string, data: Partial<Car>): Promise<Car> {
+        const response = await api.patch(`/cars/${id}`, data);
+        return response.data;
+    }
+
+    static async deleteCar(id: string): Promise<void> {
+        await api.delete(`/cars/${id}`);
     }
 }

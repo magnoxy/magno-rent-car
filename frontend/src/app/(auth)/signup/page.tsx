@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Car, Mail, Lock, User, FileText, ArrowLeft } from 'lucide-react';
+import { AuthService } from '@/services/auth.service';
+import { UserRole } from '@/types';
 
 export default function SignupPage() {
     const router = useRouter();
@@ -16,16 +18,37 @@ export default function SignupPage() {
         password: '',
         confirmPassword: ''
     });
+    const [error, setError] = useState('');
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.id]: e.target.value });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Simulate signup
-        console.log('Signing up with:', formData);
-        router.push('/dashboard');
+        setError('');
+
+        if (formData.password !== formData.confirmPassword) {
+            setError('As senhas não coincidem.');
+            return;
+        }
+
+        try {
+            await AuthService.register({
+                name: formData.name,
+                email: formData.email,
+                password: formData.password,
+                role: UserRole.CLIENT, // Default role
+                // Mock URLs for now until file upload is implemented
+                cnhUrl: 'https://example.com/cnh_placeholder.jpg', 
+                rgUrl: 'https://example.com/rg_placeholder.jpg',
+                proofOfResidencyUrl: 'https://example.com/proof_placeholder.jpg'
+            });
+            router.push('/dashboard');
+        } catch (err: any) {
+            console.error(err);
+            setError('Erro ao criar conta. Tente novamente.');
+        }
     };
 
     return (
@@ -43,6 +66,11 @@ export default function SignupPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                     {error && (
+                        <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md border border-red-200">
+                            {error}
+                        </div>
+                    )}
                     <div className="space-y-2">
                         <label className="text-sm font-medium leading-none" htmlFor="name">
                             Nome Completo
@@ -108,6 +136,23 @@ export default function SignupPage() {
                                 placeholder="••••••••"
                                 className="pl-10"
                                 value={formData.password}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium leading-none" htmlFor="confirmPassword">
+                           Confirmar Senha
+                        </label>
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                            <Input
+                                id="confirmPassword"
+                                type="password"
+                                placeholder="••••••••"
+                                className="pl-10"
+                                value={formData.confirmPassword}
                                 onChange={handleChange}
                                 required
                             />

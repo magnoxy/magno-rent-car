@@ -2,13 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
-import { TalentoModule } from './talento/talento.module';
-import { ClienteModule } from './cliente/cliente.module';
-import { InstitutoModule } from './instituto/instituto.module';
-import { ProjetoModule } from './projeto/projeto.module';
-import { AreaModule } from './area/area.module';
 import { AuthModule } from './auth/auth.module';
-import { PropostasModule } from './propostas/propostas.module';
+import { CarsModule } from './cars/cars.module';
+import { RentalsModule } from './rentals/rentals.module';
 
 @Module({
   imports: [
@@ -17,25 +13,23 @@ import { PropostasModule } from './propostas/propostas.module';
       isGlobal: true,
     }),
     TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: process.env.DATABASE_HOST,
-      port: Number(process.env.DATABASE_PORT),
-      username: process.env.DATABASE_USER,
-      password: process.env.DATABASE_PASSWORD,
-      database: process.env.DATABASE_NAME,
+      type: 'postgres',
+      url: process.env.DATABASE_URL,
       entities: [`${__dirname}/**/*.entity{.js, .ts}`],
       migrations: [`${__dirname}/migrations/{.ts, *.js}`],
       migrationsRun: true,
       synchronize: true,
+      ssl: true,
+      extra: {
+        ssl: {
+          rejectUnauthorized: false,
+        },
+      },
     }),
     UserModule,
-    TalentoModule,
-    ClienteModule,
-    InstitutoModule,
-    ProjetoModule,
-    AreaModule,
     AuthModule,
-    PropostasModule,
+    CarsModule,
+    RentalsModule,
   ],
   controllers: [],
   providers: [],

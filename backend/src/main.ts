@@ -3,33 +3,26 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import * as session from 'express-session';
 import * as passport from 'passport';
-import * as connectRedis from 'connect-redis';
-import * as redis from 'redis';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const client = redis.createClient({ url: process.env.REDIS_URI });
-
-  const RedisStore = connectRedis(session);
 
   app.enableCors({
-    origin: ['http://localhost'], // Substitua com a origem do seu cliente
-    credentials: true, // Permite credenciais
+    origin: ['http://localhost:3001'],
+    credentials: true,
   });
 
   app.use(
     session({
       name: 'session',
-      secret: process.env.SESSION_SECRET,
+      secret: process.env.SESSION_SECRET || 'secret',
       resave: false,
       saveUninitialized: false,
-      store: new RedisStore({
-        client,
-        ttl: 86400,
-      }),
       cookie: {
         maxAge: 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: false, // Set to true in production with HTTPS
       },
     }),
   );
@@ -40,14 +33,14 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()
-    .setTitle('Api Gcid')
-    .setDescription('The GCID API description')
+    .setTitle('Magno Rent Car API')
+    .setDescription('API for car rental system')
     .setVersion('1.0')
-    .addTag('Gcid')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
   await app.listen(3000);
+  console.log('Application is running on: http://localhost:3000');
 }
 bootstrap();

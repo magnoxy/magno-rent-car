@@ -1,4 +1,3 @@
-
 export enum CarStatus {
   AVAILABLE = 'AVAILABLE',
   RENTED = 'RENTED',
@@ -11,10 +10,19 @@ export enum RentalStatus {
   COMPLETED = 'COMPLETED'
 }
 
+export enum UserRole {
+  OWNER = 'OWNER',
+  CLIENT = 'CLIENT',
+}
+
 export interface User {
   id: string;
   name: string;
-  role: 'OWNER' | 'CLIENT';
+  email: string;
+  role: UserRole;
+  cnhUrl?: string;
+  rgUrl?: string;
+  proofOfResidencyUrl?: string;
 }
 
 export interface Car {
@@ -34,9 +42,8 @@ export interface Rental {
   id: string;
   carId: string;
   clientId: string;
-  ownerId: string;
-  startDate: string;
-  endDate: string;
+  startDate: string; // ISO Date string
+  endDate: string; // ISO Date string
   totalPrice: number;
   status: RentalStatus;
   paymentStatus: 'PAID' | 'UNPAID';

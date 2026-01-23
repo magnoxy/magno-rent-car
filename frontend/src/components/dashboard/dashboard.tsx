@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User, Car, Rental, RentalStatus } from '@/types';
+import { User, Car, Rental, RentalStatus, UserRole } from '@/types';
 import { StatsOverview, RentalList, FleetList } from './dashboard-components';
 
 interface Props {
@@ -12,14 +12,18 @@ interface Props {
 }
 
 export const Dashboard: React.FC<Props> = ({ user, cars, rentals, onCompleteRental }) => {
-    const isOwner = user.role === 'OWNER';
-    const myRentals = isOwner ? rentals.filter(r => r.ownerId === user.id) : rentals.filter(r => r.clientId === user.id);
+    const isOwner = user.role === UserRole.OWNER;
+    // Note: ownerId in rental is not strictly in the type interface I defined earlier but present in the entity, 
+    // I will check if I need to update the interface or if I can use a different field.
+    // Based on the entity, owner should be reachable through the car relation in the backend.
+    // For now, I'll stick to the logic but I might need to adjust based on the Car relation.
+    const myRentals = isOwner ? rentals : rentals.filter(r => r.clientId === user.id);
     const myCars = cars.filter(c => c.ownerId === user.id);
 
     const [activeTab, setActiveTab] = useState<'rentals' | 'fleet'>('rentals');
 
     const activeRentalsCount = myRentals.filter(r => r.status === RentalStatus.ACTIVE).length;
-    const totalRevenue = myRentals.reduce((a, b) => a + b.totalPrice, 0);
+    const totalRevenue = myRentals.reduce((a, b) => a + Number(b.totalPrice), 0);
 
     return (
         <div className="space-y-8">

@@ -1,20 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Car, Rental, User, CarStatus } from '@/types';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Car, Rental, User, CarStatus, UserRole, RentalStatus } from '@/types';
 import { CarService } from '@/services/car.service';
 import { RentalService } from '@/services/rental.service';
+import { AuthService } from '@/services/auth.service';
 import { Navbar } from '@/components/dashboard/navbar';
 import { CarGrid } from '@/components/dashboard/car-grid';
 import { Dashboard } from '@/components/dashboard/dashboard';
 import { ListingModal } from '@/components/dashboard/listing-modal';
 import { PaymentModal } from '@/components/dashboard/payment-modal';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 
 export default function DashboardPage() {
-    // Simulated user state - in real app would come from auth context
-    const [user, setUser] = useState<User>({ id: 'u1', name: 'Guest', role: 'CLIENT' });
+    const router = useRouter();
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoadingUser, setIsLoadingUser] = useState(true);
 
     const [cars, setCars] = useState<Car[]>([]);
     const [rentals, setRentals] = useState<Rental[]>([]);
@@ -22,37 +25,106 @@ export default function DashboardPage() {
     const [isListingOpen, setIsListingOpen] = useState(false);
     const [selectedCarForRent, setSelectedCarForRent] = useState<Car | null>(null);
 
+    useEffect(() => {
+        const currentUser = AuthService.getCurrentUser();
+        if (!currentUser) {
+            router.push('/login');
+        } else {
+            setUser(currentUser);
+            setIsLoadingUser(false);
+            loadData();
+        }
+    }, [router]);
+
+    const loadData = async () => {
+        try {
+            const [fetchedCars, fetchedRentals] = await Promise.all([
+                CarService.getCars(),
+                RentalService.getRentals()
+            ]);
+            setCars(fetchedCars);
+            setRentals(fetchedRentals);
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+        }
+    };
+
     const handleRent = (car: Car) => {
         setSelectedCarForRent(car);
     };
 
-    const handlePaymentConfirm = (days: number) => {
-        if (!selectedCarForRent) return;
+    const handlePaymentConfirm = async (days: number) => {
+        if (!selectedCarForRent || !user) return;
 
-        const rental = RentalService.createRental(selectedCarForRent, user, days);
-        setRentals([...rentals, rental]);
-        setCars(cars.map(c => c.id === selectedCarForRent.id ? { ...c, status: CarStatus.RENTED } : c));
-        setView('DASHBOARD');
-        setSelectedCarForRent(null);
+        try {
+            const rentalData: Partial<Rental> = {
+                carId: selectedCarForRent.id,
+                clientId: user.id,
+                startDate: new Date().toISOString(),
+                endDate: new Date(Date.now() + 86400000 * days).toISOString(),
+                totalPrice: selectedCarForRent.pricePerDay * days,
+                status: RentalStatus.ACTIVE,
+                paymentStatus: 'PAID'
+            };
+
+            const newRental = await RentalService.createRental(rentalData);
+            
+            // Update local state
+            setRentals([...rentals, newRental]);
+            setCars(cars.map(c => c.id === selectedCarForRent.id ? { ...c, status: CarStatus.RENTED } : c));
+            setView('DASHBOARD');
+            setSelectedCarForRent(null);
+        } catch (error) {
+            console.error('Error creating rental:', error);
+        }
     };
 
-    const handleCompleteRental = (rental: Rental) => {
-        const updatedRental = RentalService.completeRental(rental);
-        setRentals(rentals.map(r => r.id === rental.id ? updatedRental : r));
-        setCars(cars.map(c => c.id === rental.carId ? { ...c, status: CarStatus.AVAILABLE } : c));
+    const handleCompleteRental = async (rental: Rental) => {
+        try {
+            const updatedRental = await RentalService.updateRental(rental.id, {
+                status: RentalStatus.COMPLETED
+            });
+            
+            setRentals(rentals.map(r => r.id === rental.id ? updatedRental : r));
+            setCars(cars.map(c => c.id === rental.carId ? { ...c, status: CarStatus.AVAILABLE } : c));
+        } catch (error) {
+            console.error('Error completing rental:', error);
+        }
     };
 
-    const handleAddCar = (carData: Partial<Car>) => {
-        const newCar = CarService.createCar(carData, user);
-        setCars([...cars, newCar]);
-        setIsListingOpen(false);
+    const handleAddCar = async (carData: Partial<Car>) => {
+        if (!user) return;
+        try {
+            const newCar = await CarService.createCar({
+                ...carData,
+                ownerId: user.id,
+                status: CarStatus.AVAILABLE
+            });
+            setCars([...cars, newCar]);
+            setIsListingOpen(false);
+        } catch (error) {
+            console.error('Error adding car:', error);
+        }
     };
+
+    const handleLogout = () => {
+        AuthService.logout();
+        router.push('/login');
+    };
+
+    if (isLoadingUser || !user) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <Loader2 className="w-8 h-8 animate-spin text-slate-900" />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-50/50">
             <Navbar
                 user={user}
-                onSwitchRole={() => setUser({ ...user, role: user.role === 'CLIENT' ? 'OWNER' : 'CLIENT' })}
+                onSwitchRole={() => setUser({ ...user, role: user.role === UserRole.CLIENT ? UserRole.OWNER : UserRole.CLIENT })}
                 setView={setView}
                 currentView={view}
             />
@@ -65,7 +137,7 @@ export default function DashboardPage() {
                                 <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Explore nossa frota</h1>
                                 <p className="text-slate-500">Veículos premium selecionados para sua melhor experiência.</p>
                             </div>
-                            {user.role === 'OWNER' && (
+                            {user.role === UserRole.OWNER && (
                                 <Button onClick={() => setIsListingOpen(true)} className="gap-2">
                                     <Plus className="w-4 h-4" />
                                     Novo Anúncio

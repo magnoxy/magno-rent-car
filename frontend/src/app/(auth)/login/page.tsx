@@ -7,17 +7,24 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Car, Mail, Lock, ArrowLeft } from 'lucide-react';
+import { AuthService } from '@/services/auth.service';
 
 export default function LoginPage() {
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Simulate login
-        console.log('Logging in with:', { email, password });
-        router.push('/dashboard');
+        setError('');
+        try {
+            await AuthService.login(email, password);
+            router.push('/dashboard');
+        } catch (err: any) {
+            console.error(err);
+            setError('Login falhou. Verifique suas credenciais.');
+        }
     };
 
     return (
@@ -35,8 +42,13 @@ export default function LoginPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                     {error && (
+                        <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md border border-red-200">
+                            {error}
+                        </div>
+                    )}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="email">
+                        <label className="text-sm font-medium leading-none" htmlFor="email">
                             Email
                         </label>
                         <div className="relative">
@@ -53,7 +65,7 @@ export default function LoginPage() {
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="password">
+                        <label className="text-sm font-medium leading-none" htmlFor="password">
                             Senha
                         </label>
                         <div className="relative">

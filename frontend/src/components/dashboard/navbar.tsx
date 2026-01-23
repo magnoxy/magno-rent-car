@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { User } from '@/types';
+import { User, UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Car, LayoutDashboard, Search, UserCircle } from 'lucide-react';
@@ -43,7 +43,7 @@ export const Navbar: React.FC<Props> = ({ user, onSwitchRole, setView, currentVi
 
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 mr-2">
-                    <Badge variant="secondary" className="hidden sm:inline-flex capitalize">{user.role}</Badge>
+                    <Badge variant="secondary" className="hidden sm:inline-flex capitalize">{user.role.toLowerCase()}</Badge>
                     <Button variant="ghost" onClick={onSwitchRole} className="text-xs h-8 px-2">Alternar</Button>
                 </div>
                 <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs">

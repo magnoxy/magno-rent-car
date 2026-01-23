@@ -18,7 +18,7 @@ export class UserService {
       const { password, ...result } = user;
       return result;
     } catch (error) {
-      throw new BadRequestException(error.message, error.code);
+      throw new BadRequestException(error.message);
     }
   }
 
@@ -31,39 +31,13 @@ export class UserService {
     if (!user) {
       throw new BadRequestException(`User with id ${id} not found`);
     }
-    return user;
-  }
-
-  async findOneId(id: string) {
-    const user = await this.userRepository.findOne({
-      where: { id },
-      relations: ['talento', 'instituto', 'cliente'],
-    });
-    if (!user) {
-      throw new BadRequestException(`User with id ${id} not found`);
-    }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...result } = user;
     return result;
   }
 
-  async findUsernameOrEmail(username?: string, email?: string) {
-    if (!username && !email) {
-      throw new BadRequestException(`Username or email is required`);
-    }
-
-    let user: User | undefined;
-    if (username) {
-      user = await this.userRepository.findOne({
-        where: { username },
-        relations: ['talento', 'instituto', 'cliente'],
-      });
-    } else if (email) {
-      user = await this.userRepository.findOne({
-        where: { email },
-        relations: ['talento', 'instituto', 'cliente'],
-      });
-    }
+  async findByEmail(email: string) {
+    const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
       throw new BadRequestException(`User not found`);
     }
@@ -79,7 +53,7 @@ export class UserService {
       await this.userRepository.remove(user);
       return { message: `User with id ${id} removed` };
     } catch (error) {
-      throw new BadRequestException(error.message, error.code);
+      throw new BadRequestException(error.message);
     }
   }
 
@@ -87,7 +61,7 @@ export class UserService {
     try {
       return this.userRepository.update(id, updateUserDto);
     } catch (error) {
-      throw new BadRequestException(error.message, error.code);
+      throw new BadRequestException(error.message);
     }
   }
 }

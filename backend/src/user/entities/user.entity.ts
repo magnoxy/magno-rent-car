@@ -1,49 +1,48 @@
-import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { hashPasswordTransform } from 'src/common/helpers/crypto';
-import { Talento } from 'src/talento/entities/talento.entity';
-import { Instituto } from 'src/instituto/entities/instituto.entity';
-import { Cliente } from 'src/cliente/entities/cliente.entity';
+import { Car } from '../../cars/entities/car.entity';
+import { Rental } from '../../rentals/entities/rental.entity';
+
+export enum UserRole {
+  OWNER = 'OWNER',
+  CLIENT = 'CLIENT',
+}
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ length: 50, unique: true })
-  username: string;
+  @Column({ length: 100 })
+  name: string;
 
   @Column({ length: 100, unique: true })
   email: string;
-
-  @Column({ type: 'tinyint', default: 0 })
-  status: number;
 
   @Column({
     transformer: hashPasswordTransform,
   })
   password: string;
 
-  @Column({ nullable: true, length: 255 })
-  image: string;
-
-  @Column({ type: 'int' }) // 1 client, 2 instituition, 3 talent
-  userType: number;
-
-  @OneToOne(() => Talento, (talento) => talento.user, {
-    // eager: true,
-    nullable: true,
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+    default: UserRole.CLIENT,
   })
-  talento: Talento;
+  role: UserRole;
 
-  @OneToOne(() => Instituto, (instituto) => instituto.user, {
-    // eager: true,
-    nullable: true,
-  })
-  instituto: Instituto;
+  @Column({ type: 'text', nullable: true })
+  cnhUrl: string;
 
-  @OneToOne(() => Cliente, (cliente) => cliente.user, {
-    // eager: true,
-    nullable: true,
-  })
-  cliente: Cliente;
+  @Column({ type: 'text', nullable: true })
+  rgUrl: string;
+
+  @Column({ type: 'text', nullable: true })
+  proofOfResidencyUrl: string;
+
+  @OneToMany(() => Car, (car) => car.owner)
+  cars: Car[];
+
+  @OneToMany(() => Rental, (rental) => rental.client)
+  rentals: Rental[];
 }
