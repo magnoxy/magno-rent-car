@@ -1,7 +1,0 @@
-{
-  "name": "DriveShare Boilerplate",
-  "description": "A high-end car rental platform boilerplate built with Clean Architecture, TypeScript, and Tailwind CSS. Features include car listing, rental booking, payment simulation, and real-time tracking dashboards.",
-  "requestFramePermissions": [
-    "geolocation"
-  ]
-}

@@ -1,20 +1,58 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Projeto Next.js + Nest.js
 
-# Run and deploy your AI Studio app
+Este é um projeto que utiliza Next.js para o frontend e Nest.js para o backend. 
 
-This contains everything you need to run your app locally.
+## Frameworks utilizados
 
-View your app in AI Studio: https://ai.studio/apps/drive/1CW3aZo0P04sAweYvLGf-XGNzdKKlaCT-
+- Frontend: [Next.js](https://nextjs.org/)
 
-## Run Locally
+- Backend: [Nest.js](https://nestjs.com/)
 
-**Prerequisites:**  Node.js
+## Configuração e Execução
 
+Para executar o projeto, siga estas etapas:
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+1. Certifique-se de ter o Docker Engine instalado em sua máquina.
+
+2. Clone este repositório para sua máquina local:
+
+    ```bash
+    git clone https://github.com/daw-gcid/gCID.git
+    ```
+
+3. Navegue até o diretório do projeto:
+
+    ```bash
+    cd gCID
+    ```
+
+4. Execute o comando a seguir para construir as imagens Docker:
+
+    ```bash
+    docker-compose build
+    ```
+
+5. Após a conclusão da construção, inicie os contêineres com o seguinte comando:
+
+    ```bash
+    docker-compose up -d
+    ```
+
+Isso iniciará os contêineres do frontend, backend e banco de dados em segundo plano.
+
+Agora, você pode acessar o frontend em [http://localhost:80](http://localhost:80).
+
+## Comandos Úteis do Docker Compose
+
+- Parar os contêineres em execução:
+
+    ```bash
+    docker-compose down
+    ```
+
+- Visualizar logs dos contêineres em tempo real:
+
+    ```bash
+    docker-compose logs -f
+    ```
+

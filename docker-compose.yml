@@ -1,0 +1,39 @@
+version: "3.8"
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:3000"
+    environment:
+      NODE_ENV: production
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    restart: always
+
+  backend:
+    build: ./backend
+    depends_on:
+      - mariadb
+    volumes:
+      - ./backend/src:/app/src
+    command: npm run start:dev
+    ports:
+      - 3000:3000
+
+  mariadb:
+    image: mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=gcid
+      - MYSQL_USER=gcid
+      - MYSQL_PASSWORD=gcid
+    ports:
+      - 33069:3306
+
+  redis:
+    image: redis
+    ports:
+      - 6379:6379
