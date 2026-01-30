@@ -15,7 +15,9 @@ export class CarsService {
     try {
       return await this.carRepository.save(createCarDto);
     } catch (error) {
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(
+        error instanceof Error ? error.message : 'An unknown error occurred',
+      );
     }
   }
 
@@ -40,7 +42,9 @@ export class CarsService {
       await this.carRepository.update(id, updateCarDto);
       return this.findOne(id);
     } catch (error) {
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(
+        error instanceof Error ? error.message : 'An unknown error occurred',
+      );
     }
   }
 
@@ -53,7 +57,9 @@ export class CarsService {
       await this.carRepository.remove(car);
       return { message: `Car with id ${id} removed` };
     } catch (error) {
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(
+        error instanceof Error ? error.message : 'An unknown error occurred',
+      );
     }
   }
 }

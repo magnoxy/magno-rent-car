@@ -8,8 +8,8 @@ import ToastProvider from "../context/ToastContext";
 import { queryClient } from "../lib/react-query";
 
 export const metadata: Metadata = {
-  title: "GCID",
-  description: "GCID - Conectando quem precisa com quem tem a solução",
+  title: "MRC",
+  description: "Magno Rent Car - Sistema de aluguel de carros",
 };
 
 export default function AppLayout({
@@ -24,7 +24,7 @@ export default function AppLayout({
         <body
           className={cn(
             "min-h-screen bg-background font-sans antialiased",
-            inter.variable
+            inter.variable,
           )}
         >
           <ToastProvider>{children}</ToastProvider>

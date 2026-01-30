@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Calendar, Wallet, Car as CarIcon, Navigation } from 'lucide-react';
+import { Calendar, Wallet, Car as CarIcon, Navigation, Pencil } from 'lucide-react';
 import { User, Car, Rental, RentalStatus } from '@/types';
 
 interface StatsOverviewProps {
@@ -97,29 +97,41 @@ export const RentalList: React.FC<RentalListProps> = ({ rentals, cars, onComplet
 
 interface FleetListProps {
     cars: Car[];
+    rentals: Rental[];
+    onEdit: (car: Car) => void;
 }
 
-export const FleetList: React.FC<FleetListProps> = ({ cars }) => {
+export const FleetList: React.FC<FleetListProps> = ({ cars, rentals, onEdit }) => {
     return (
         <div className="grid gap-4">
-            {cars.map(car => (
-                <Card key={car.id} className="p-4 flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        <div className={cn("w-2 h-2 rounded-full", car.status === 'RENTED' ? 'bg-amber-500' : 'bg-emerald-500')} />
-                        <div>
-                            <h4 className="font-semibold text-sm">{car.brand} {car.model}</h4>
-                            <p className="text-xs text-slate-500">{car.status === 'RENTED' ? 'Alugado agora' : 'Disponível'}</p>
+            {cars.map(car => {
+                const isRented = rentals.some(r => r.carId === car.id && r.status === RentalStatus.ACTIVE);
+                const canEdit = car.status !== 'RENTED' && !isRented;
+
+                return (
+                    <Card key={car.id} className="p-4 flex justify-between items-center">
+                        <div className="flex items-center gap-4">
+                            <div className={cn("w-2 h-2 rounded-full", (car.status === 'RENTED' || isRented) ? 'bg-amber-500' : 'bg-emerald-500')} />
+                            <div>
+                                <h4 className="font-semibold text-sm">{car.brand} {car.model}</h4>
+                                <p className="text-xs text-slate-500">{(car.status === 'RENTED' || isRented) ? 'Alugado agora' : 'Disponível'}</p>
+                            </div>
                         </div>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button variant="ghost" className="h-8 px-2">
-                            <Navigation className="w-4 h-4 mr-2" />
-                            Rastrear
-                        </Button>
-                        <Button variant="outline" className="h-8 px-2">Configurar</Button>
-                    </div>
-                </Card>
-            ))}
+                        <div className="flex gap-2">
+                            <Button variant="ghost" className="h-8 px-2">
+                                <Navigation className="w-4 h-4 mr-2" />
+                                Rastrear
+                            </Button>
+                            {canEdit && (
+                                <Button variant="outline" className="h-8 px-2" onClick={() => onEdit(car)}>
+                                    <Pencil className="w-3 h-3 mr-2" />
+                                    Editar
+                                </Button>
+                            )}
+                        </div>
+                    </Card>
+                );
+            })}
         </div>
     );
 };

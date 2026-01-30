@@ -24,6 +24,7 @@ export default function DashboardPage() {
     const [view, setView] = useState<'EXPLORE' | 'DASHBOARD'>('EXPLORE');
     const [isListingOpen, setIsListingOpen] = useState(false);
     const [selectedCarForRent, setSelectedCarForRent] = useState<Car | null>(null);
+    const [editingCar, setEditingCar] = useState<Car | null>(null);
 
     useEffect(() => {
         const currentUser = AuthService.getCurrentUser();
@@ -31,6 +32,12 @@ export default function DashboardPage() {
             router.push('/login');
         } else {
             setUser(currentUser);
+            // Set initial view based on role
+            if (currentUser.role === UserRole.OWNER) {
+                setView('DASHBOARD');
+            } else {
+                setView('EXPLORE');
+            }
             setIsLoadingUser(false);
             loadData();
         }
@@ -92,24 +99,30 @@ export default function DashboardPage() {
         }
     };
 
-    const handleAddCar = async (carData: Partial<Car>) => {
+    const handleSaveCar = async (carData: Partial<Car>) => {
         if (!user) return;
         try {
-            const newCar = await CarService.createCar({
-                ...carData,
-                ownerId: user.id,
-                status: CarStatus.AVAILABLE
-            });
-            setCars([...cars, newCar]);
+            if (editingCar) {
+                const updatedCar = await CarService.updateCar(editingCar.id, carData);
+                setCars(cars.map(c => c.id === editingCar.id ? updatedCar : c));
+            } else {
+                const newCar = await CarService.createCar({
+                    ...carData,
+                    ownerId: user.id,
+                    status: CarStatus.AVAILABLE
+                });
+                setCars([...cars, newCar]);
+            }
             setIsListingOpen(false);
+            setEditingCar(null);
         } catch (error) {
-            console.error('Error adding car:', error);
+            console.error('Error saving car:', error);
         }
     };
 
-    const handleLogout = () => {
-        AuthService.logout();
-        router.push('/login');
+    const handleEditCar = (car: Car) => {
+        setEditingCar(car);
+        setIsListingOpen(true);
     };
 
     if (isLoadingUser || !user) {
@@ -124,7 +137,6 @@ export default function DashboardPage() {
         <div className="min-h-screen bg-slate-50/50">
             <Navbar
                 user={user}
-                onSwitchRole={() => setUser({ ...user, role: user.role === UserRole.CLIENT ? UserRole.OWNER : UserRole.CLIENT })}
                 setView={setView}
                 currentView={view}
             />
@@ -137,29 +149,45 @@ export default function DashboardPage() {
                                 <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Explore nossa frota</h1>
                                 <p className="text-slate-500">Veículos premium selecionados para sua melhor experiência.</p>
                             </div>
-                            {user.role === UserRole.OWNER && (
-                                <Button onClick={() => setIsListingOpen(true)} className="gap-2">
+                            {/* Hide Create Button in Explore view if user is OWNER (though Owners shouldn't see Explore, this is a fallback) */}
+                        </div>
+                        <CarGrid cars={cars.filter(c => c.status === CarStatus.AVAILABLE && !rentals.some(r => r.carId === c.id && r.status === RentalStatus.ACTIVE))} onRent={handleRent} />
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        {user.role === UserRole.OWNER && (
+                             <div className="flex justify-end">
+                                <Button 
+                                    onClick={() => {
+                                        setEditingCar(null);
+                                        setIsListingOpen(true);
+                                    }} 
+                                    className="gap-2"
+                                >
                                     <Plus className="w-4 h-4" />
                                     Novo Anúncio
                                 </Button>
-                            )}
-                        </div>
-                        <CarGrid cars={cars.filter(c => c.status === CarStatus.AVAILABLE)} onRent={handleRent} />
+                             </div>
+                        )}
+                        <Dashboard
+                            user={user}
+                            cars={cars}
+                            rentals={rentals}
+                            onCompleteRental={handleCompleteRental}
+                            onEditCar={handleEditCar}
+                        />
                     </div>
-                ) : (
-                    <Dashboard
-                        user={user}
-                        cars={cars}
-                        rentals={rentals}
-                        onCompleteRental={handleCompleteRental}
-                    />
                 )}
             </main>
 
             {isListingOpen && (
                 <ListingModal
-                    onClose={() => setIsListingOpen(false)}
-                    onSubmit={handleAddCar}
+                    onClose={() => {
+                        setIsListingOpen(false);
+                        setEditingCar(null);
+                    }}
+                    onSubmit={handleSaveCar}
+                    initialData={editingCar || undefined}
                 />
             )}
 

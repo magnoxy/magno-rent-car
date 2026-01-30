@@ -6,8 +6,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Car, Mail, Lock, User, FileText, ArrowLeft } from 'lucide-react';
+import { Car, Mail, Lock, User, FileText, ArrowLeft, Loader2 } from 'lucide-react';
 import { AuthService } from '@/services/auth.service';
+import { uploadService } from '@/services/upload.service';
 import { UserRole } from '@/types';
 
 export default function SignupPage() {
@@ -18,10 +19,40 @@ export default function SignupPage() {
         password: '',
         confirmPassword: ''
     });
+    const [documentUrls, setDocumentUrls] = useState({
+        cnhUrl: '',
+        rgUrl: '',
+        proofOfResidencyUrl: ''
+    });
+    const [uploading, setUploading] = useState({
+        cnh: false,
+        rg: false,
+        residency: false
+    });
     const [error, setError] = useState('');
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.id]: e.target.value });
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'cnh' | 'rg' | 'residency') => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(prev => ({ ...prev, [type]: true }));
+        setError('');
+
+        try {
+            const url = await uploadService.uploadFile(file);
+            if (type === 'cnh') setDocumentUrls(prev => ({ ...prev, cnhUrl: url }));
+            if (type === 'rg') setDocumentUrls(prev => ({ ...prev, rgUrl: url }));
+            if (type === 'residency') setDocumentUrls(prev => ({ ...prev, proofOfResidencyUrl: url }));
+        } catch (error) {
+            console.error("Upload failed", error);
+            setError('Falha ao fazer upload do documento. Tente novamente.');
+        } finally {
+            setUploading(prev => ({ ...prev, [type]: false }));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -33,16 +64,20 @@ export default function SignupPage() {
             return;
         }
 
+        if (!documentUrls.cnhUrl || !documentUrls.rgUrl || !documentUrls.proofOfResidencyUrl) {
+            setError('Por favor, faça o upload de todos os documentos necessários.');
+            return;
+        }
+
         try {
             await AuthService.register({
                 name: formData.name,
                 email: formData.email,
                 password: formData.password,
                 role: UserRole.CLIENT, // Default role
-                // Mock URLs for now until file upload is implemented
-                cnhUrl: 'https://example.com/cnh_placeholder.jpg', 
-                rgUrl: 'https://example.com/rg_placeholder.jpg',
-                proofOfResidencyUrl: 'https://example.com/proof_placeholder.jpg'
+                cnhUrl: documentUrls.cnhUrl,
+                rgUrl: documentUrls.rgUrl,
+                proofOfResidencyUrl: documentUrls.proofOfResidencyUrl
             });
             router.push('/dashboard');
         } catch (err: any) {
@@ -111,16 +146,46 @@ export default function SignupPage() {
                         </h3>
                         <div className="grid grid-cols-1 gap-3">
                             <div className="space-y-1">
-                                <label className="text-xs text-slate-500 uppercase font-bold">CNH</label>
-                                <Input type="file" className="text-xs" />
+                                <label className="text-xs text-slate-500 uppercase font-bold flex justify-between">
+                                    CNH
+                                    {uploading.cnh && <Loader2 className="h-3 w-3 animate-spin" />}
+                                    {!uploading.cnh && documentUrls.cnhUrl && <span className="text-green-600 text-[10px]">Enviado</span>}
+                                </label>
+                                <Input 
+                                    type="file" 
+                                    className="text-xs" 
+                                    onChange={(e) => handleFileChange(e, 'cnh')} 
+                                    disabled={uploading.cnh}
+                                    accept="image/*,.pdf"
+                                />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs text-slate-500 uppercase font-bold">RG</label>
-                                <Input type="file" className="text-xs" />
+                                <label className="text-xs text-slate-500 uppercase font-bold flex justify-between">
+                                    RG
+                                    {uploading.rg && <Loader2 className="h-3 w-3 animate-spin" />}
+                                    {!uploading.rg && documentUrls.rgUrl && <span className="text-green-600 text-[10px]">Enviado</span>}
+                                </label>
+                                <Input 
+                                    type="file" 
+                                    className="text-xs" 
+                                    onChange={(e) => handleFileChange(e, 'rg')} 
+                                    disabled={uploading.rg}
+                                    accept="image/*,.pdf"
+                                />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs text-slate-500 uppercase font-bold">Comprovante de Residência</label>
-                                <Input type="file" className="text-xs" />
+                                <label className="text-xs text-slate-500 uppercase font-bold flex justify-between">
+                                    Comprovante de Residência
+                                    {uploading.residency && <Loader2 className="h-3 w-3 animate-spin" />}
+                                    {!uploading.residency && documentUrls.proofOfResidencyUrl && <span className="text-green-600 text-[10px]">Enviado</span>}
+                                </label>
+                                <Input 
+                                    type="file" 
+                                    className="text-xs" 
+                                    onChange={(e) => handleFileChange(e, 'residency')} 
+                                    disabled={uploading.residency}
+                                    accept="image/*,.pdf"
+                                />
                             </div>
                         </div>
                     </div>
@@ -158,7 +223,7 @@ export default function SignupPage() {
                             />
                         </div>
                     </div>
-                    <Button type="submit" className="w-full">
+                    <Button type="submit" className="w-full" disabled={uploading.cnh || uploading.rg || uploading.residency}>
                         Criar Conta
                     </Button>
                 </form>

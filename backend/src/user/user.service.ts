@@ -18,7 +18,9 @@ export class UserService {
       const { password, ...result } = user;
       return result;
     } catch (error) {
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(
+        error instanceof Error ? error.message : 'An unknown error occurred',
+      );
     }
   }
 
@@ -53,7 +55,9 @@ export class UserService {
       await this.userRepository.remove(user);
       return { message: `User with id ${id} removed` };
     } catch (error) {
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(
+        error instanceof Error ? error.message : 'An unknown error occurred',
+      );
     }
   }
 
@@ -61,7 +65,9 @@ export class UserService {
     try {
       return this.userRepository.update(id, updateUserDto);
     } catch (error) {
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(
+        error instanceof Error ? error.message : 'An unknown error occurred',
+      );
     }
   }
 }

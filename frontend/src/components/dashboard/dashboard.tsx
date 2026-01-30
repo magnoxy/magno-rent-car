@@ -9,9 +9,10 @@ interface Props {
     cars: Car[];
     rentals: Rental[];
     onCompleteRental: (rental: Rental) => void;
+    onEditCar: (car: Car) => void;
 }
 
-export const Dashboard: React.FC<Props> = ({ user, cars, rentals, onCompleteRental }) => {
+export const Dashboard: React.FC<Props> = ({ user, cars, rentals, onCompleteRental, onEditCar }) => {
     const isOwner = user.role === UserRole.OWNER;
     // Note: ownerId in rental is not strictly in the type interface I defined earlier but present in the entity, 
     // I will check if I need to update the interface or if I can use a different field.
@@ -61,7 +62,7 @@ export const Dashboard: React.FC<Props> = ({ user, cars, rentals, onCompleteRent
                     {activeTab === 'rentals' ? (
                         <RentalList rentals={myRentals} cars={cars} onCompleteRental={onCompleteRental} />
                     ) : (
-                        <FleetList cars={myCars} />
+                        <FleetList cars={myCars} rentals={rentals} onEdit={onEditCar} />
                     )}
                 </div>
             </div>
